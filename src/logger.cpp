@@ -43,6 +43,33 @@ string logLevelToString(LogLevel level) {
 }
 
 // ===================================================================
+// 1. РЕАЛИЗАЦИЯ БАЗОВОГО КЛАССА LoggerBase
+// ===================================================================
+
+// Конструктор просто инициализирует поле
+LoggerBase::LoggerBase(LogLevel default_level) : m_default_level(default_level) {}
+
+// Общий метод для всех
+void LoggerBase::set_default_level(LogLevel new_level) {
+    m_default_level = new_level;
+}
+
+// РЕАЛИЗАЦИЯ ОБЩИХ ФУНКЦИЙ (перемещена сюда)
+std::string LoggerBase::format_log_entry(const std::string& message, LogLevel level) {
+    std::string level_str = logLevelToString(level);
+    return get_current_time_str() + " | " + level_str + " | " + message;
+}
+
+std::string LoggerBase::get_current_time_str() {
+    time_t now = time(nullptr);
+    std::string time_str = ctime(&now);
+    if (!time_str.empty() && time_str.back() == '\n') {
+        time_str.pop_back();
+    }
+    return time_str;
+}
+
+// ===================================================================
 // Реализация методов класса FileLogger
 // ===================================================================
 
@@ -51,9 +78,8 @@ string logLevelToString(LogLevel level) {
  * @param filename Имя файла для записи логов.
  * @param default_level Минимальный уровень важности для записи сообщений.
  */
-FileLogger::FileLogger(const string& filename, LogLevel default_level) {
-    m_default_level = default_level;
-
+FileLogger::FileLogger(const string& filename, LogLevel default_level)
+    : LoggerBase(default_level) {
     log_file.open(filename, ios::app);
     if (!log_file.is_open()) {
         cerr << "CRITICAL ERROR: Could not open log file: " << filename << endl;
@@ -85,74 +111,6 @@ void FileLogger::log(const string& message, LogLevel level) {
     log_file << entry << endl;
 }
 
-/**
- * @brief Устанавливает новый минимальный уровень важности для записи.
- * Позволяет изменять "многословность" логгера во время работы программы.
- * @param new_level Новый уровень важности по умолчанию.
- */
-void FileLogger::set_default_level(LogLevel new_level) {
-    m_default_level = new_level;
-}
-
-/**
- * @brief [Приватный] Форматирует итоговую строку для записи в лог.
- * @param message Текст сообщения.
- * @param level Уровень важности сообщения.
- * @return Готовая к записи строка вида "ВРЕМЯ | УРОВЕНЬ | СООБЩЕНИЕ".
- */
-string FileLogger::format_log_entry(const string& message, LogLevel level) {
-    setlocale(LC_ALL, "ru_RU.UTF-8");
-    string level_str = logLevelToString(level);
-    return get_current_time_str() + " | " + level_str + " | " + message;
-}
-
-/**
- * @brief [Приватный] Получает текущее системное время в виде строки.
- * @return Отформатированная строка с датой и временем.
- */
-string FileLogger::get_current_time_str() {
-    time_t now = time(nullptr);
-    string time_str = ctime(&now);
-
-    if (!time_str.empty() && time_str.back() == '\n') {
-        time_str.pop_back();
-    }
-    return time_str;
-}
-
-// ===================================================================
-// Реализация глобальной функции-обертки log_message
-// ===================================================================
-
-/**
- * @brief Утилита для однократной записи в лог. Запрашивает текст у пользователя.
- * @param filename Имя файла для записи.
- * @param severity_level Уровень важности сообщения (1=INFO, 2=WARNING, 3=LOG_ERROR).
- */
-void log_message(const string& filename, int severity_level) {
-    FileLogger logger(filename, LogLevel::INFO);
-
-    LogLevel message_level;
-    if (severity_level >= 1 && severity_level <= 3) {
-        message_level = static_cast<LogLevel>(severity_level);
-    } else {
-        cout << "Warning: Unknown severity level " << severity_level
-                  << ". Using INFO." << endl;
-        message_level = LogLevel::INFO;
-    }
-
-    cout << "Enter a message to log: ";
-    string message;
-
-    cin.ignore((numeric_limits<streamsize>::max)(), '\n');
-    getline(cin, message);
-
-    logger.log(message, message_level);
-
-    cout << "Message logged successfully." << endl;
-}
-
-
 // ===================================================================
 // Реализация методов класса SocketLogger
 // ===================================================================
@@ -164,7 +122,7 @@ void log_message(const string& filename, int severity_level) {
  * @param default_level Минимальный уровень важности для отправки сообщений.
  */
 SocketLogger::SocketLogger(const std::string& host, int port, LogLevel default_level)
-    : default_level(default_level), m_socket(INVALID_SOCKET), is_connected(false)
+    : LoggerBase(default_level), m_socket(INVALID_SOCKET), is_connected(false)
 {
 #ifdef _WIN32
     WSADATA wsaData;
@@ -216,7 +174,7 @@ SocketLogger::~SocketLogger() {
  * @param level Уровень важности сообщения.
  */
 void SocketLogger::log(const std::string& message, LogLevel level) {
-    if (!is_connected || static_cast<int>(level) < static_cast<int>(default_level)) {
+    if (!is_connected || static_cast<int>(level) < static_cast<int>(m_default_level)) {
         return;
     }
 
@@ -229,30 +187,34 @@ void SocketLogger::log(const std::string& message, LogLevel level) {
     }
 }
 
-/**
- * @brief Устанавливает новый минимальный уровень важности для отправки сообщений.
- * @param new_level Новый уровень по умолчанию.
- */
-void SocketLogger::set_default_level(LogLevel new_level) {
-    default_level = new_level;
-}
+// ===================================================================
+// Реализация глобальной функции-обертки log_message
+// ===================================================================
 
 /**
- * @brief [Приватный] Форматирует строку лога.
+ * @brief Утилита для однократной записи в лог. Запрашивает текст у пользователя.
+ * @param filename Имя файла для записи.
+ * @param severity_level Уровень важности сообщения (1=INFO, 2=WARNING, 3=LOG_ERROR).
  */
-std::string SocketLogger::format_log_entry(const std::string& message, LogLevel level) {
-    setlocale(LC_ALL, "ru_RU.UTF-8");
-    return get_current_time_str() + " | " + logLevelToString(level) + " | " + message;
-}
+void log_message(const string& filename, int severity_level) {
+    FileLogger logger(filename, LogLevel::INFO);
 
-/**
- * @brief [Приватный] Получает текущее время.
- */
-std::string SocketLogger::get_current_time_str() {
-    time_t now = time(nullptr);
-    std::string time_str = ctime(&now);
-    if (!time_str.empty() && time_str.back() == '\n') {
-        time_str.pop_back();
+    LogLevel message_level;
+    if (severity_level >= 1 && severity_level <= 3) {
+        message_level = static_cast<LogLevel>(severity_level);
+    } else {
+        cout << "Warning: Unknown severity level " << severity_level
+                  << ". Using INFO." << endl;
+        message_level = LogLevel::INFO;
     }
-    return time_str;
+
+    cout << "Enter a message to log: ";
+    string message;
+
+    cin.ignore((numeric_limits<streamsize>::max)(), '\n');
+    getline(cin, message);
+
+    logger.log(message, message_level);
+
+    cout << "Message logged successfully." << endl;
 }
