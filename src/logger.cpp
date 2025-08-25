@@ -1,13 +1,6 @@
 // ВНИМАНИЕ: Для предотвращения конфликта макросов min/max из Windows.h
 #define NOMINMAX
 
-#include "liblog/logger.h"
-#include <iostream>
-#include <ctime>
-#include <string>
-#include <limits>
-#include <locale>
-
 // --- Блок кросс-платформенной совместимости для сокетов ---
 #ifdef _WIN32
     #include <winsock2.h>
@@ -19,10 +12,17 @@
     #include <arpa/inet.h>
     #include <unistd.h>
     typedef int SOCKET;
-    const int INVALID_SOCKET = -1;
-    const int SOCKET_ERROR = -1;
-    #define closesocket close
+const int INVALID_SOCKET = -1;
+const int SOCKET_ERROR = -1;
+#define closesocket close
 #endif
+
+#include "liblog/logger.h"
+#include <iostream>
+#include <ctime>
+#include <string>
+#include <limits>
+#include <locale>
 
 // ===================================================================
 // Вспомогательная функция для преобразования enum в строку

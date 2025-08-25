@@ -1,26 +1,22 @@
-// log_server.cpp - КОМПИЛИРОВАТЬ КАК ОТДЕЛЬНУЮ ПРОГРАММУ!
-// Windows: g++ log_server.cpp -o log_server.exe -lws2_32
-// Linux/macOS: g++ log_server.cpp -o log_server
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+typedef int SOCKET;
+const int INVALID_SOCKET = -1;
+const int SOCKET_ERROR = -1;
+#define closesocket close
+#endif
 
 #include <iostream>
 #include <string>
 #include <vector>
 
 using namespace std;
-
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #pragma comment(lib, "ws2_32.lib") 
-#else
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <unistd.h>
-    typedef int SOCKET; 
-    const int INVALID_SOCKET = -1;
-    const int SOCKET_ERROR = -1;
-    #define closesocket close
-#endif
 
 const int PORT = 8080;
 const int BUFFER_SIZE = 1024;

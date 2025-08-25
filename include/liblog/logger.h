@@ -1,14 +1,15 @@
 #ifndef LIBLOG_LOGGER_H
 #define LIBLOG_LOGGER_H
 
-#include <string>
-#include <fstream>
-
 #ifdef _WIN32
     #include <winsock2.h>
 #else
     typedef int SOCKET;
 #endif
+
+
+#include <string>
+#include <fstream>
 
 using namespace std;
 /**
