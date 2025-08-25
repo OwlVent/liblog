@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void demonstrate_logging(Logger& logger) {
+void demonstrate_logging(FileLogger& logger) {
     cout << "  - Logging an INFO message..." << endl;
     logger.log("This is an info message.", LogLevel::INFO);
 
@@ -12,7 +12,7 @@ void demonstrate_logging(Logger& logger) {
     logger.log("This is a warning message.", LogLevel::WARNING);
 
     cout << "  - Logging an ERROR message..." << endl;
-    logger.log("This is an error message.", LogLevel::ERROR);
+    logger.log("This is an error message.", LogLevel::LOG_ERROR);
 }
 
 int main() {
@@ -21,7 +21,7 @@ int main() {
     cout << "--- DEMONSTRATION OF THE LOGGER CLASS ---" << endl;
     cout << "Log file used: \"" << filename << "\"" << endl << endl;
     
-    Logger logger(filename, LogLevel::INFO);
+    FileLogger logger(filename, LogLevel::INFO);
     cout << "[1] Logger created. Initial default level is INFO." << endl;
     logger.log("--- Logger session started with INFO level ---", LogLevel::INFO);
     
@@ -36,8 +36,8 @@ int main() {
     cout << "    -> Now, INFO messages should be ignored." << endl << endl;
     
     cout << "[3] Changing default level to ERROR..." << endl;
-    logger.set_default_level(LogLevel::ERROR);
-    logger.log("--- Default log level changed to ERROR ---", LogLevel::ERROR);
+    logger.set_default_level(LogLevel::LOG_ERROR);
+    logger.log("--- Default log level changed to ERROR ---", LogLevel::LOG_ERROR);
     
     demonstrate_logging(logger);
     cout << "    -> Now, INFO and WARNING messages should be ignored." << endl << endl;

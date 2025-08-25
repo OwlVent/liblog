@@ -3,35 +3,32 @@
 
 #include <string>
 #include <fstream>
+#include <winsock2.h>
 
 using namespace std;
 /**
  * @brief Перечисление для уровней важности сообщений.
  * Использование enum class обеспечивает строгую типизацию и предотвращает ошибки.
  */
-enum class LogLevel {
-    INFO    = 1,
-    WARNING = 2,
-    ERROR   = 3
-};
+enum class LogLevel { INFO = 1, WARNING, LOG_ERROR };
 
 /**
- * @class Logger
+ * @class FileLogger
  * @brief Основной класс для управления логированием в файл.
  */
-class Logger {
+class FileLogger {
 public:
     /**
      * @brief Конструктор логгера.
      * @param filename Путь к файлу журнала.
      * @param default_level Минимальный уровень важности, при котором сообщения будут записываться.
      */
-    explicit Logger(const string& filename, LogLevel default_level = LogLevel::INFO);
+    explicit FileLogger(const string& filename, LogLevel default_level = LogLevel::INFO);
 
     /**
      * @brief Деструктор логгера.
      */
-    ~Logger();
+    ~FileLogger();
 
     /**
      * @brief Записывает сообщение в журнал.
@@ -62,14 +59,13 @@ private:
     
 
     ofstream log_file;   // Поток для записи в файл
-    LogLevel default_level;   // Текущий минимальный уровень для записи
+    LogLevel m_default_level;   // Текущий минимальный уровень для записи
 };
-
 
 /**
  * @brief Функция-утилита для простой однократной записи в лог.
  * 
- * Эта функция является "фасадом" для класса Logger. Она создает временный
+ * Эта функция является "фасадом" для класса FileLogger. Она создает временный
  * объект логгера, запрашивает у пользователя текст сообщения в консоли
  * и записывает его в файл. Удобна для простых приложений или скриптов.
  * @param filename Путь к файлу журнала.
@@ -77,5 +73,21 @@ private:
  */
 void log_message(const string& filename, int severity_level);
 
+class SocketLogger {
+    public:
+    explicit SocketLogger(const string& host, int port, LogLevel default_level = LogLevel::INFO);
+    ~SocketLogger();
+
+    void log(const string& message, LogLevel level);
+    void set_default_level(LogLevel new_level);
+
+    private:
+    string get_current_time_str();
+    string format_log_entry(const string& message, LogLevel level);
+
+    SOCKET m_socket;
+    LogLevel default_level;
+    bool is_connected = false;
+};
 
 #endif

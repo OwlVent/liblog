@@ -3,6 +3,10 @@ project(liblog VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
+add_subdirectory(src)
+add_subdirectory(examples)
+add_subdirectory(tools)
+
 add_library(liblog src/logger.cpp)
 target_include_directories(liblog PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
